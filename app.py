@@ -14,7 +14,7 @@ def home():
 @app.route('/tools', methods=['GET'])
 def showArticles():
     # 1. db에서 tools 목록 전체를 검색합니다.
-    tools = list(db.tools.find({}, {'_id':False}))
+    tools = list(db.tools.find({}, {'_id':False}).sort('likes', -1))
 
     for tool in tools:
         tool_id = tool['id']
@@ -22,6 +22,8 @@ def showArticles():
         likes_list = list(likes_list)
         likes = len(likes_list)
         tool['likes'] = likes
+    tools = sorted(tools, key=lambda x: -x['likes'])
+
         # 2. 성공하면 success 메시지와 함께 tools 목록을 클라이언트에 전달합니다.
 
     return  jsonify({'result': 'success', 'tools': tools})
