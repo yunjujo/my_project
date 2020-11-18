@@ -1,0 +1,354 @@
+<!Doctype html>
+<html lang="ko">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+          integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+
+    <!-- jQuery and JS bundle w/ Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+            crossorigin="anonymous"></script>
+
+    <title>TeacherTech</title>
+
+    <!-- style -->
+    <style type="text/css">
+
+        * {
+            font-family: 'Do Hyeon', sans-serif;
+        }
+        .wrap {
+            width: 1500px;
+            margin: auto;
+        }
+
+        .navbar {
+            width: 100%;
+        }
+
+        .jumbotron {
+            background-color: floralwhite;
+        }
+
+        .display-4 lead {
+            text-align: center;
+        }
+
+        .card {
+            height: 600px;
+        }
+        .card-img-top {
+            height: 300px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card-footer-item {
+            text-align: right;
+            padding: 10px;
+        }
+
+        #evaluationModal svg {
+            vertical-align: text-top;
+            display: none;
+        }
+        #evaluationModal svg.active{ display: inline; }
+
+        #show-modal-card {
+            margin: 10px auto;
+        }
+        #modal-card {
+            height: auto;
+        }
+
+    </style>
+    <script>
+        var selectedId;
+
+        $(document).ready(function () {
+            $("#cards-box").html("");
+            showArticles();
+        });
+
+        function showArticles() {
+            $.ajax({
+                type: "GET",
+                url: "/tools",
+                data: {},
+                success: function (response) {
+                    console.log(response);
+                    if (response["result"] == "success") {
+                        let tools_save = response['tools'];
+                        for (i = 0; i < tools_save.length; i++) {
+                            let title = tools_save[i]['title'];
+                            let category = tools_save[i]['category'];
+                            let image = tools_save[i]['image'];
+                            let url = tools_save[i]['url'];
+                            let id = tools_save[i]['id'];
+                            let likes = tools_save[i]['likes'] || 0;
+                            let tempHtml = `
+                        <div class="col-3 mb-4">
+                            <div data-id="1" class="card">
+                                <div class="card-img-top" style="background-image: url(${image})" data-url="${image}"></div>
+                                <div class="card-body">
+                                    <a href="${url}" target="_blank" class="card-title">${title}</a>
+                                    <p class="card-text">${category}</p>
+                                    <button type="button" class="btn btn-info" onclick="onclickShowEvaluation(this, ${id})">평가 보기
+                                    </button>
+                                    <button type="button" class="btn btn-info" onclick="onclickEvaluation(${id})">평가
+                                        하기
+                                    </button>
+                                </div>
+                                <div class="card-footer-item">
+                                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-heart-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                                  </svg>
+                                  <span>좋아요 수 ${likes}</span>
+                                </div>
+                        </div>`;
+                            $('#cards-box').append(tempHtml);
+                        }
+                    }
+                }
+            })
+        }
+
+        function postArticles() {
+            let grade = $('#recipient-name').val();
+            let comment = $('#message-text').val();
+            let id = selectedId;
+            let like = $('#evaluationModal').find('svg.bi-heart-fill').hasClass('active');
+
+            if (grade == "") {
+                alert("적용 학년을 적어주세요!");
+                return;
+            } else if (comment == "") {
+                alert("실제 사용 후기를 들려주세요! 큰 도움이 될거에요!")
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: "/tools",
+                data: {'grade_give': grade, 'comment_give': comment, 'tool_id_give' : id, 'like_give': like},
+                success: function (response) { // 성공하면
+                    if (response["result"] == "success") {
+                        alert(response["msg"]);
+                        window.location.reload();
+                    }
+                }
+            })
+        }
+
+        function onclickShowEvaluation(button, id){
+            var $card = $(button).closest('.card');
+            var category = $card.find('p').text();
+            var image = $card.find('.card-img-top').data('url');
+            var title = $card.find('a').text();
+            var url = $card.find('a').attr('href');
+            var $modal = $('#showModal');
+
+            $modal.find('.card-text').text(category);
+            $modal.find('.card-title').text(title);
+            $modal.find('.card-body a').attr('href', url);
+            $modal.find('.card-img-top').css('background-image', 'url('+image+')');
+            $.ajax({
+                type: "GET",
+                url: "/evaluation?id="+id,
+                data: {},
+                success: function (response) {
+                    if (response["result"] == "success") {
+                        let tools_comment = response['tools_comment'];
+                        let number = 1
+                        $('#table-tbody').empty();
+                        for (i = 0; i < tools_comment.length; i++) {
+                            let grade = tools_comment[i]['grade'];
+                            let comment = tools_comment[i]['comment'];
+                            let tempHtml = `
+                            <tr>
+                                <th scope="row">${number}</th>
+                                <td>${grade}</td>
+                                <td>${comment}</td>
+                            </tr>`
+                            $('#table-tbody').append(tempHtml);
+                            number += 1;
+                        }
+                    }
+                }
+            })
+            $modal.modal('show');
+        }
+
+        function onclickEvaluation(id){
+            selectedId = id;
+            $('#evaluationModal').modal('show');
+        }
+
+        function onclickLike(element){
+            $(element).find('svg').toggleClass('active');
+            if($('svg.bi-heart-fill').hasClass('active')){
+                like = true;
+            }else
+                like  = false;
+        }
+    </script>
+</head>
+
+<body>
+<div class="navbar">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">TeacherTech</a>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">My page</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+        </div>
+    </nav>
+</div>
+<div class="wrap">
+    <div class="jumbotron">
+        <h1 class="display-4">온라인 수업 도구, 어떤 것을 사용하시나요?</h1>
+        <p class="lead">인터넷에 나온 수 많은 도구 중 나에게 딱 맞는 도구를 찾기 어려우셨나요?</p>
+        <hr class="my-4">
+        <p>티쳐테크에서 실제 사용자들의 평가를 확인하고 선생님에게 꼭 필요한 수업 도구를 선택해보세요.</p>
+        <p>내가 사용했던 수업 도구를 평가해보세요!</p>
+    </div>
+    <!-- cards-box -->
+    <div id="cards-box" class="row">
+        <div class="col-4 mb-3">
+            <div data-id="1" class="card">
+                <img class="card-img-top"
+                     src="https://www.eurail.com/content/dam/images/eurail/Italy%20OCP%20Promo%20Block.adaptive.767.1535627244182.jpg"
+                     alt="Card image cap">
+                <div class="card-body">
+                    <a href="#" class="card-title">온라인 도구 이름</a>
+                    <p class="card-text">카테고리</p>
+                    <button type="button" class="btn-outline-info" data-toggle="modal" data-target="#showModal">평가 보기
+                    </button>
+                    <button type="button" class="btn-outline-info" data-toggle="modal" data-target="#evaluationModal">평가
+                        하기
+                    </button>
+                </div>
+                <div class="card-footer-item">
+                    <a href="#" title="${title}"> 좋아요 수
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-heart" fill="currentColor"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                  d="M8 2.748l-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- evaluationModal -->
+    <div class="modal fade" id="evaluationModal" tabindex="-1" aria-labelledby="evaluationModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="evaluationModalLabel">평가 하기</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>온라인 도구의 실제 사용 후기를 남겨주세요!</h5>
+                    <form>
+                        <div class="form-group">
+                            <label for="recipient-name" class="col-form-label">적용 학년:</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="col-form-label">나의 코멘트:</label>
+                            <textarea class="form-control" id="message-text"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text">추천한다면 좋아요 누르기</label>
+                            <div onclick="onclickLike(this)">
+                                <svg width="1em" height="1em" viewBox="0 0 16 16" class="active bi bi-heart"
+                                     fill="currentColor"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd"
+                                          d="M8 2.748l-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+                                </svg>
+                                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-heart-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                  <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" onclick="postArticles()">저장</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- showModal -->
+    <div class="modal fade" id="showModal" tabindex="-1" aria-labelledby="evaluationModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="showModalLabel">평가 보기</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>온라인 도구의 평가 내용을 확인하세요!</h5>
+                    <div class="col-4 mb-3" id="show-modal-card">
+                        <div data-id="1" class="card" id="modal-card">
+                            <div class="card-img-top" style="background-image: url()"></div>
+                            <div class="card-body">
+                                <a href="" target="_blank" class="card-title">온라인 도구 이름</a>
+                                <p class="card-text">카테고리</p>
+                            </div>
+                        </div>
+                    </div>
+                     <table class="table table-hover" id="comment-table">
+                            <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">적용 학년</th>
+                                <th scope="col">코멘트</th>
+                            </tr>
+                            </thead>
+                            <tbody id="table-tbody">
+                            <tr>
+                                <th scope="row">1</th>
+                                <td>Mark</td>
+                                <td>Otto</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-toggle="modal" data-dismiss="modal"
+                            data-target="#evaluationModal">평가 하기</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
