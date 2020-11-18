@@ -96,7 +96,7 @@
                             let id = tools_save[i]['id'];
                             let likes = tools_save[i]['likes'] || 0;
                             let tempHtml = `
-                        <div class="col-3 mb-4">
+                        <div class="col-3 mb-4" id="home-card">
                             <div data-id="1" class="card">
                                 <div class="card-img-top" style="background-image: url(${image})" data-url="${image}"></div>
                                 <div class="card-body">
@@ -112,7 +112,7 @@
                                   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-heart-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
                                   </svg>
-                                  <span>좋아요 수 ${likes}</span>
+                                  <span>${likes}</span>
                                 </div>
                         </div>`;
                             $('#cards-box').append(tempHtml);
@@ -216,8 +216,8 @@
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                <input class="form-control mr-sm-2" id="keyword" type="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" id="search-button" type="submit">Search</button>
             </form>
         </div>
     </nav>
@@ -232,11 +232,9 @@
     </div>
     <!-- cards-box -->
     <div id="cards-box" class="row">
-        <div class="col-4 mb-3">
+        <div class="col-4 mb-3" id="home-card">
             <div data-id="1" class="card">
-                <img class="card-img-top"
-                     src="https://www.eurail.com/content/dam/images/eurail/Italy%20OCP%20Promo%20Block.adaptive.767.1535627244182.jpg"
-                     alt="Card image cap">
+                <div class="card-img-top" style="background-image: url()"></div>
                 <div class="card-body">
                     <a href="#" class="card-title">온라인 도구 이름</a>
                     <p class="card-text">카테고리</p>
